@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PacketSpy Master</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Playfair Display&display=swap">
+
+    <link rel="shortcut icon" href="{{ url_for('static', filename='image/new.png') }}" type="image/x-icon">
+    <style>
+        /* Updated CSS styles for the table 
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #414040;
+        } 
+        */
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('static/image/new1.jpg'); /* Replace 'images/background.jpg' with the path to your image */
+            background-size: cover; /* Ensures the image covers the entire background */
+            background-repeat: no-repeat; /* Prevents the image from repeating */
+            /* Other styles for your body */
+        }
+
+        header {
+            background-color: #031b07;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            display: flex; /* Use flexbox for layout */
+            align-items: center; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #3f9642;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background-color: #e0e0e0; /* Change table background color */
+            border: 1px solid #ccc; /* Change table border color */
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+            color: #080808; /* Change text color within the table */
+        }
+        th {
+            background-color:  #9b9999; /* Change header background color */
+        }
+        /* Update table row background and text color */
+        tr:nth-child(even) {
+            background-color: #E0FFFF; /* Dark background color for even rows */
+            color: #ffffff; /* White text color for even rows */
+        }
+        tr:nth-child(odd) {
+            background-color: #ADD8E6; /* Darker background color for odd rows */
+            color: #ffffff; /* White text color for odd rows */
+        }
+        h1 {
+        font-family: 'Playfair Display', sans-serif; /* Apply the 'Roboto' font */
+        /* Additional styles if needed */
+        }
+        
+    </style>
+</head>
+<body>
+    <header>
+        <img src="{{ url_for('static', filename='image/new.png') }}"alt="Logo" style="width: 50px; height: 50px; margin-right: 10px;">
+        <h1>PacketSpy Master</h1>
+    </header>
+    <div style="text-align: center; margin-top: 20px;">
+        <select id="interfaceSelect">
+            <option value="WiFi">WiFi</option>
+            <option value="Wi-Fi">Wi-Fi</option>
+            <option value="Ethernet">Ethernet</option>
+        </select>
+        <button onclick="selectInterface()">Select Interface</button>
+        <button onclick="startCapture()">Start Capture</button>
+        <button onclick="stopCapture()">Stop Capture</button>
+        <button onclick="clearPackets()">Clear Packets</button>
+    </div>
+    <table id="packetTable">
+        <thead>
+            <!-- Table header remains the same -->
+            <tr>
+                <th>Packet Number</th>
+                <th>Time</th>
+                <th>Length</th>
+                <th>Info</th>
+                <th>Source IP</th>
+                <th>Destination IP</th>
+                <th>Source Port</th>
+                <th>Destination Port</th>
+                <th>Protocol</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody id="packetData">
+            <!-- Packet data will be displayed here -->
+        </tbody>
+    </table>
+
+    <script>
+        function selectInterface() {
+            const selectedInterface = document.getElementById('interfaceSelect').value;
+
+            fetch(`/select_interface/${selectedInterface}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(`Interface selected: ${selectedInterface}`);
+                    } else {
+                        alert('Failed to select interface.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred.');
+                });
+        }
+
+        function startCapture() {
+            fetch('/start_capture')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        setTimeout(getCapturedPackets, 1000); // Fetch captured packets after 1 second
+                    } else {
+                        alert('Failed to start capture.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred.');
+                });
+        }
+
+        // Rest of the JavaScript functions remain the same as provided previously
+        function stopCapture() {
+            fetch('/stop_capture')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Capture stopped.');
+                    } else {
+                        alert('Failed to stop capture.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred.');
+                });
+        }
+
+        function clearPackets() {
+            fetch('/clear_packets')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Captured packets cleared.');
+                    } else {
+                        alert('Failed to clear captured packets.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred.');
+                });
+        }
+
+        function getCapturedPackets() {
+            fetch('/captured_packets')
+                .then(response => response.json())
+                .then(data => {
+                    const packetData = document.getElementById('packetData');
+                    packetData.innerHTML = ''; // Clear previous data
+
+                    data.forEach(packet => {
+                        const row = document.createElement('tr');
+                        const keys = ["Packet Number", "Time", "Length", "Info", "Source IP", "Destination IP", "Source Port", "Destination Port", "Protocol", "Data"];
+
+                        keys.forEach(key => {
+                            const cell = document.createElement('td');
+                            cell.textContent = packet[key];
+                            row.appendChild(cell);
+                        });
+
+                        packetData.appendChild(row);
+                    });
+                    
+                    setTimeout(getCapturedPackets, 1000); // Fetch captured packets every 1 second
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while fetching captured packets.');
+                });
+        }
+
+        // Fetch captured packets initially when the page loads
+        document.addEventListener('DOMContentLoaded', getCapturedPackets);
+    </script>
+</body>
+</html>
